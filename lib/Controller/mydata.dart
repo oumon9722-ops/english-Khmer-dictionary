@@ -1,20 +1,55 @@
 import 'package:app/dbhelper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 class MyData extends GetxController {
   int index = 0;
   var favoriteWords = <dynamic>[].obs;
+  var history = <dynamic>[].obs;
   var isDarkMode = false.obs;
 
-  void toggleFavorite(Map<String, dynamic> wordItem) {
-    int index = favoriteWords.indexWhere(
+  final DBHelper _dbHelper = DBHelper();
+
+  var words = <dynamic>[
+    {
+      "id": "1",
+      "englishword": "book",
+      "partofspeech": "n",
+      "englishphonetic": "bʊk",
+      "khmerphonetic": "ប៊ុកខ៍",
+      "khmerdef": "សៀវភៅ",
+    },
+  ].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadPersistedData();
+  }
+
+  // Load persistent favorites and search history from SQLite
+  Future<void> loadPersistedData() async {
+    await _dbHelper.initDB();
+    final favs = await _dbHelper.getFavorites();
+    favoriteWords.assignAll(favs);
+
+    final hist = await _dbHelper.getHistory();
+    history.assignAll(hist);
+  }
+
+  // Toggle favorite with SQLite persistence
+  Future<void> toggleFavorite(Map<String, dynamic> wordItem) async {
+    await _dbHelper.initDB();
+    int existingIndex = favoriteWords.indexWhere(
       (element) => element['englishword'] == wordItem['englishword'],
     );
 
-    if (index >= 0) {
-      favoriteWords.removeAt(index);
+    if (existingIndex >= 0) {
+      favoriteWords.removeAt(existingIndex);
+      await _dbHelper.removeFavorite(wordItem['englishword'] ?? '');
     } else {
-      favoriteWords.add(wordItem);
+      favoriteWords.insert(0, wordItem);
+      await _dbHelper.addFavorite(wordItem);
     }
   }
 
@@ -24,78 +59,82 @@ class MyData extends GetxController {
     );
   }
 
-  var words = <dynamic>[
-    {
-      "id": "1",
-      "englishword": "book",
-      "partofspeech": "n",
-      "englishphonetic": "bʊk",
-      "khmerphonetic": "ប៊ុកខ៍",
-    
-    },
-  ].obs;
+  Future<void> clearFavorites() async {
+    favoriteWords.clear();
+    await _dbHelper.clearFavorites();
+  }
 
-  var history = [].obs;
-  void deleteHistoryItem(int index) {
+  // History with SQLite persistence
+  Future<void> addToHistory(Map word) async {
+    final wordMap = Map<String, dynamic>.from(word);
+    history.removeWhere(
+      (element) => element['englishword'] == wordMap['englishword'],
+    );
+    history.insert(0, wordMap);
+    await _dbHelper.addHistory(wordMap);
+  }
+
+  Future<void> deleteHistoryItem(int index) async {
     if (index < 0 || index >= history.length) return;
+    final item = history[index];
     history.removeAt(index);
-  }
-  void addToHistory(Map word) {
-    history.add(Map<String, dynamic>.from(word));
+    if (item['englishword'] != null) {
+      await _dbHelper.deleteHistoryByWord(item['englishword']);
+    }
   }
 
-  final DBHelper _dbHelper = DBHelper();
+  Future<void> clearHistory() async {
+    history.clear();
+    await _dbHelper.clearHistory();
+  }
 
   Future<void> addNewWord({
     required String english,
     required String pos,
     required String engPhonetic,
     required String khPhonetic,
+    String khmerDef = '',
   }) async {
     await _dbHelper.initDB();
 
-    // Save to the local SQLite database file
-    int uniqueId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    int insertedId = await _dbHelper.insertWord(
+      englishword: english,
+      englishphonetic: engPhonetic,
+      khmerphonetic: khPhonetic,
+      partofspeech: pos,
+      khmerdef: khmerDef,
+    );
 
-    await _dbHelper.db!.insert('words', {
-      'id': uniqueId,
-      'englishword': english,
-      'partofspeech': pos,
-      'englishphonetic': engPhonetic,
-      'khmerphonetic': khPhonetic,
-    });
     Map<String, dynamic> newRow = {
-      "id": uniqueId,
+      "id": insertedId,
       "englishword": english,
       "partofspeech": pos,
       "englishphonetic": engPhonetic,
       "khmerphonetic": khPhonetic,
+      "khmerdef": khmerDef,
     };
     words.insert(0, newRow);
   }
+
   Future<void> filterWords(String query) async {
+    await _dbHelper.initDB();
     if (query.trim().isEmpty) {
-      
-      await _dbHelper.initDB();
       List defaultList = await _dbHelper.db!.rawQuery(
-       "SELECT * FROM words where englishword like 'A%' limit 50;",
+        "SELECT * FROM words WHERE englishword LIKE 'A%' LIMIT 50;",
       );
       words.assignAll(defaultList);
     } else {
-      // Execute the search function already defined in your DBHelper class
-      await _dbHelper.initDB();
       List filteredList = await _dbHelper.searchWord(query.trim());
       words.assignAll(filteredList);
     }
   }
-  void toggleTheme(bool value) {
-  isDarkMode.value = value;
-  if (value) {
-    Get.changeTheme(ThemeData.dark());
-  } else {
-    Get.changeTheme(ThemeData.light());
-  }
-}
 
-  
+  void toggleTheme(bool value) {
+    isDarkMode.value = value;
+    if (value) {
+      Get.changeTheme(ThemeData.dark());
+    } else {
+      Get.changeTheme(ThemeData.light());
+    }
+  }
 }

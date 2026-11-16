@@ -8,226 +8,315 @@ import 'package:share_plus/share_plus.dart';
 import 'package:html/parser.dart';
 
 class DetailScreen extends StatefulWidget {
+  const DetailScreen({Key? key}) : super(key: key);
+
   @override
   State<DetailScreen> createState() => _DetailScreenState();
 }
 
 class _DetailScreenState extends State<DetailScreen> {
   int currentIndex = 0;
+  final FlutterTts flutterTts = FlutterTts();
 
-  FlutterTts flutterTts = FlutterTts();
-
-  // Color Constants
   static const Color primaryBlue = Color(0xFF1A73E8);
+  static const Color lightBlueAccent = Color(0xFFE8F0FE);
 
   @override
   Widget build(BuildContext context) {
-    MyData d = Get.find<MyData>();
-    // SAFE CHECK (IMPORTANT)
+    final MyData d = Get.find<MyData>();
+
+    // SAFE CHECK
     if (d.words.isEmpty || d.index >= d.words.length) {
       return Scaffold(
-        body: Center(
-          child: Text("No data found"),
+        appBar: AppBar(
+          backgroundColor: primaryBlue,
+          foregroundColor: Colors.white,
+          title: const Text("Detail"),
+        ),
+        body: const Center(
+          child: Text("No word data found"),
         ),
       );
     }
-return Obx(() {
-  final isDark = d.isDarkMode.value;
 
-    return Scaffold(
-      backgroundColor: isDark ? Colors.grey[900] : Colors.grey.shade100,
-      appBar: AppBar(
-        backgroundColor: primaryBlue, // Changed from green.shade600
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+    return Obx(() {
+      final isDark = d.isDarkMode.value;
+      final currentWord = Map<String, dynamic>.from(d.words[d.index]);
+      final isFav = d.isFavorite(currentWord);
+
+      return Scaffold(
+        backgroundColor: isDark ? Colors.grey[900] : Colors.grey.shade100,
+        appBar: AppBar(
+          backgroundColor: primaryBlue,
+          foregroundColor: Colors.white,
+          leading: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+          ),
+          title: const Text("Detail", style: TextStyle(color: Colors.white)),
+          centerTitle: true,
+          bottom: PreferredSize(
+            preferredSize: const Size(double.infinity, 120),
+            child: Column(
+              children: [
+                Text(
+                  "${currentWord['englishword'] ?? ''}",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if ((currentWord['partofspeech'] ?? '').toString().isNotEmpty)
+                  Text(
+                    "${currentWord['partofspeech']}",
+                    style: const TextStyle(color: Colors.white70, fontSize: 15),
+                  ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      tooltip: "Copy Phonetics",
+                      onPressed: () async {
+                        await Clipboard.setData(
+                          ClipboardData(
+                            text:
+                                "${currentWord['englishphonetic'] ?? ''} - ${currentWord['khmerphonetic'] ?? ''}",
+                          ),
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Phonetics copied to clipboard"),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.copy, color: Colors.white),
+                    ),
+                    IconButton(
+                      tooltip: isFav ? "Remove Favorite" : "Add Favorite",
+                      onPressed: () {
+                        d.toggleFavorite(currentWord);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isFav
+                                  ? "Removed from Favorites!"
+                                  : "Added to Favorites!",
+                            ),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        isFav ? Icons.favorite : Icons.favorite_border,
+                        color: isFav ? Colors.redAccent : Colors.white,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: "Share Word",
+                      onPressed: () {
+                        Share.share(
+                          "Word: ${currentWord['englishword'] ?? ''}\n"
+                          "Phonetic: ${currentWord['englishphonetic'] ?? ''} (${currentWord['khmerphonetic'] ?? ''})\n"
+                          "Definition: ${currentWord['khmerdef'] ?? ''}",
+                        );
+                      },
+                      icon: const Icon(Icons.share, color: Colors.white),
+                    ),
+                    IconButton(
+                      tooltip: "Pronounce",
+                      onPressed: () async {
+                        await flutterTts.setLanguage("en-US");
+                        await flutterTts.setPitch(1.0);
+                        await flutterTts.setSpeechRate(0.5);
+                        await flutterTts.speak(currentWord['englishword'] ?? '');
+                      },
+                      icon: const Icon(Icons.volume_up, color: Colors.white),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
         ),
-        title: Text("Detail", style: TextStyle(color: Colors.white)),
-        actions: [IconButton(onPressed: () {}, icon: Icon(Icons.apps, color: Colors.white))],
-        bottom: PreferredSize(
-          preferredSize: Size(double.infinity, 120),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(12),
           child: Column(
             children: [
-              Text(
-                "${d.words[d.index]['englishword']}",
-                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                "${d.words[d.index]['partofspeech']}",
-                style: TextStyle(color: Colors.white70, fontSize: 14),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () async {
-                      await Clipboard.setData(
-                        ClipboardData(
-                          text:
-                              "${d.words[d.index]['englishphonetic']} - ${d.words[d.index]['khmerphonetic']}",
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[850] : Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Phonetics",
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
-                      );
-
-                      Get.snackbar("Copied", "Phonetic copied");
-                    },
-                    icon: Icon(Icons.copy, color: Colors.white),
-                  ),
-                  IconButton(onPressed: () {}, icon: Icon(Icons.favorite, color: Colors.white)),
-                  IconButton(
-                    onPressed: () {
-                      Share.share(
-                        "${d.words[d.index]['englishword']}\n"
-                        "${d.words[d.index]['englishphonetic']}\n"
-                        "${d.words[d.index]['khmerdef']}",
-                      );
-                    },
-                    icon: Icon(Icons.share, color: Colors.white),
-                  ),
-                  IconButton(
-                    onPressed: () async {
-                      await flutterTts.setLanguage("en-US");
-                      await flutterTts.setPitch(1.0);
-                      await flutterTts.setSpeechRate(0.5);
-
-                      await flutterTts.speak(d.words[d.index]['englishword']);
-                    },
-                    icon: Icon(Icons.volume_up, color: Colors.white),
-                  ),
-                ],
+                        IconButton(
+                          icon: const Icon(Icons.copy, size: 20, color: Colors.grey),
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(
+                                text:
+                                    "${currentWord['englishphonetic'] ?? ''} - ${currentWord['khmerphonetic'] ?? ''}",
+                              ),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Phonetics copied"),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    const SizedBox(height: 4),
+                    Text(
+                      "English: [${currentWord['englishphonetic'] ?? 'N/A'}]",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: isDark ? Colors.white70 : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Khmer: {${currentWord['khmerphonetic'] ?? 'N/A'}}",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: primaryBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[850] : Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Definition",
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy, size: 20, color: Colors.grey),
+                          onPressed: () async {
+                            String htmlContent = currentWord['khmerdef'] ?? "";
+                            String plain = parse(htmlContent).body?.text ?? "";
+                            await Clipboard.setData(ClipboardData(text: plain));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Definition copied"),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    Html(
+                      data: (currentWord['khmerdef'] ?? '').toString().isEmpty
+                          ? "<p>No definition available.</p>"
+                          : currentWord['khmerdef'],
+                      style: {
+                        "body": Style(
+                          fontSize: FontSize(16),
+                          color: isDark ? Colors.white70 : Colors.black87,
+                          lineHeight: LineHeight(1.5),
+                        ),
+                      },
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              margin: EdgeInsets.all(12),
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Phonetic",
-                        style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold), // Accented label
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.copy, color: Colors.grey),
-                        onPressed: () async {
-                          await Clipboard.setData(
-                            ClipboardData(
-                              text:
-                                  "${d.words[d.index]['englishphonetic']} - ${d.words[d.index]['khmerphonetic']}",
-                            ),
-                          );
-
-                          Get.snackbar("Copied", "Phonetic copied");
-                        },
-                      ),
-                    ],
-                  ),
-                  Divider(),
-                  Text(
-                    "${d.words[d.index]['englishphonetic']} - {${d.words[d.index]['khmerphonetic']}}",
-                    textAlign: TextAlign.left,
-                  ),
-                ],
-              ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: currentIndex,
+          selectedItemColor: primaryBlue,
+          unselectedItemColor: Colors.grey,
+          backgroundColor: isDark ? Colors.grey[850] : Colors.white,
+          type: BottomNavigationBarType.fixed,
+          onTap: (index) {
+            if (index == 0) {
+              Navigator.pop(context);
+            } else if (index == 1) {
+              Navigator.pushReplacementNamed(context, '/favorite');
+            } else if (index == 2) {
+              Navigator.pushReplacementNamed(context, '/history');
+            } else if (index == 3) {
+              Navigator.pushReplacementNamed(context, '/setting');
+            }
+          },
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: "Home",
             ),
-            Container(
-              margin: EdgeInsets.all(12),
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Definition",
-                        style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold), // Accented label
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.copy, color: Colors.grey),
-                        onPressed: () async {
-                          String html = d.words[d.index]['khmerdef'] ?? "";
-                          String text = parse(html).body?.text ?? "";
-
-                          await Clipboard.setData(ClipboardData(text: text));
-
-                          Get.snackbar("Copied", "Definition copied");
-                        },
-                      ),
-                    ],
-                  ),
-                  Divider(),
-                  Html(data: d.words[d.index]['khmerdef'] ?? ""),
-                ],
-              ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.favorite_border),
+              activeIcon: Icon(Icons.favorite),
+              label: "Favorite",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history_outlined),
+              activeIcon: Icon(Icons.history),
+              label: "History",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined),
+              activeIcon: Icon(Icons.settings),
+              label: "Settings",
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        selectedItemColor: primaryBlue, // Changed from orange
-        unselectedItemColor: Colors.grey, // Cleaned up random green colors
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-
-          if (index == 0) {
-            Navigator.pushNamed(context, '/home');
-          }
-
-          if (index == 1) {
-            Navigator.pushNamed(context, '/favorite');
-          }
-
-          if (index == 2) {
-            Navigator.pushNamed(context, '/history');
-          }
-
-          if (index == 3) {
-            Navigator.pushNamed(context, '/setting');
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: "Favorite",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: "History",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: "Settings",
-          ),
-        ],
-      ),
-    );
-    },);
+      );
+    });
   }
 }

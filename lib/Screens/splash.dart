@@ -3,69 +3,79 @@ import 'package:flutter/material.dart';
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
-  // Theme Color Constant
   static const Color primaryBlue = Color(0xFF1A73E8);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: primaryBlue, // Changed from green background
+      backgroundColor: primaryBlue,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Icon / Image Container
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(22),
                 decoration: const BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
+                  borderRadius: BorderRadius.all(Radius.circular(24)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 15,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
                 ),
                 child: const Icon(
-                  Icons.menu_book,
+                  Icons.menu_book_rounded,
                   size: 80,
-                  color: primaryBlue, // Icon color matches the new theme
+                  color: primaryBlue,
                 ),
               ),
 
-              const SizedBox(height: 25),
+              const SizedBox(height: 30),
 
               const Text(
-                "EK Dictionary", // Updated name to match your app screens
+                "Smart Dictionary",
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 30,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
               ),
 
               const SizedBox(height: 10),
 
               const Text(
-                "Unlocking the power of words",
+                "English - Khmer Offline Dictionary",
                 style: TextStyle(fontSize: 16, color: Colors.white70),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 48),
 
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/home');
+                  Navigator.pushReplacementNamed(context, '/home');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: primaryBlue, // Text/Splash color on button
+                  foregroundColor: primaryBlue,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 15,
+                    horizontal: 48,
+                    vertical: 16,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
+                  elevation: 4,
                 ),
-                child: const Text("Start", style: TextStyle(fontSize: 18)),
+                child: const Text(
+                  "Get Started",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),

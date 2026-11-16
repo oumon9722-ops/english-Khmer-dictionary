@@ -10,26 +10,24 @@ import 'package:app/dbhelper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-
 void main() async {
-    WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
 
-
+  // Initialize controller & database
   Get.put(MyData());
-  // load Data
   DBHelper helper = DBHelper();
   await helper.initDB();
 
+  // Load initial words
   List result = await helper.db!.rawQuery(
-     "SELECT * FROM words where englishword like 'A%' limit 50;",
-   
+    "SELECT * FROM words WHERE englishword LIKE 'A%' LIMIT 50;",
   );
 
-  print(result); // 🔥 DEBUG
-
   Get.find<MyData>().words.assignAll(result);
+
   runApp(
     GetMaterialApp(
+      title: "Smart Dictionary",
       initialRoute: '/splash',
       // DEFINE LIGHT THEME DEFAULTS
       theme: ThemeData(
@@ -38,42 +36,25 @@ void main() async {
         appBarTheme: const AppBarTheme(backgroundColor: Colors.white),
       ),
 
-      // DEFINE DARK THEME DEFAULTS 
+      // DEFINE DARK THEME DEFAULTS
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.grey[900], 
-        appBarTheme: Colors.grey[850] != null 
-            ? AppBarTheme(backgroundColor: Colors.grey[850],foregroundColor: Colors.white,) 
-            : null,
+        scaffoldBackgroundColor: Colors.grey[900],
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.grey[850],
+          foregroundColor: Colors.white,
+        ),
       ),
       routes: {
-        '/splash': (context) => SplashScreen(),
-        '/home': (context) => HomeScreen(),
-        '/detail': (context) => DetailScreen(),
-        '/favorite': (context) => FavoriteScreen(),
-        '/history': (context) => HistoryScreen(),
-        '/setting': (context) => SettingsScreen(),
-        '/aboutapp': (context) => AboutAppScreen(),
+        '/splash': (context) => const SplashScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/detail': (context) => const DetailScreen(),
+        '/favorite': (context) => const FavoriteScreen(),
+        '/history': (context) => const HistoryScreen(),
+        '/setting': (context) => const SettingsScreen(),
+        '/aboutapp': (context) => const AboutAppScreen(),
       },
       debugShowCheckedModeBanner: false,
     ),
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
