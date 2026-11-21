@@ -83,7 +83,9 @@ class AboutAppScreen extends StatelessWidget {
                     ListTile(
                       leading: const Icon(Icons.group_outlined, color: primaryBlue),
                       title: const Text('Developers / Authors'),
-                      subtitle: const Text('Hor Tola & Oum On'),
+                      subtitle: const Text(
+                        'Hor Tola, Oum On, Ouch Rothphanith, Chetra SreyPhim, Voeurn Sothearoth, Nil Mengieng',
+                      ),
                     ),
                     Divider(
                       height: 1,

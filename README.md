@@ -11,10 +11,10 @@ An offline-first, feature-rich English-to-Khmer mobile dictionary application de
 - **Authors & Contributors**:
   - **Hor Tola** ([@tola-12](https://github.com/tola-12) / hortola780@gmail.com)
   - **Oum On** ([@oumon9722-ops](https://github.com/oumon9722-ops) / oumon9722@gmail.com)
-  - **Ouch Rothphanith , ouchsophanith99@gmail.com
-  - **Chetra SreyPhim , chitrasreyphim045@gmail.com
-  - **Voeurn Sothearoth , voeunsothearoth1212@gmail.com
-  - **Nil Mengieng, jralbert725@gmail.com
+  - **Ouch Rothphanith** (ouchsophanith99@gmail.com)
+  - **Chetra SreyPhim** (chitrasreyphim045@gmail.com)
+  - **Voeurn Sothearoth** (voeunsothearoth1212@gmail.com)
+  - **Nil Mengieng** (jralbert725@gmail.com)
 
 ---
 
@@ -98,4 +98,4 @@ assets/
 
 ## 📜 License & Copyright
 Developed for academic purposes at National University of Battambang (NUBB).  
-© 2026 Hor Tola & Oum On. All rights reserved.
+© 2026 Smart Dictionary Team (NUBB). All rights reserved.
